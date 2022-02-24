@@ -4,8 +4,8 @@ Created on Thu Apr 1 12:31:49 2021
 EDITED: Santiago Duarte - IHE Delft
 """
 
-from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -16,103 +16,114 @@ from zipfile import ZipFile
 import warnings
 warnings.filterwarnings("ignore")
 
-def DHIME_Download(Path,DateIni,DateFin,Parameter,Variable,Department,Code,TimeWait=10):
-       
-    # Abrir Google Chrome operado con Selenium cambiando la carpeta de descargas
-    
-    chrome_options = webdriver.ChromeOptions()
-    #chrome_options.add_argument("headless")
-    browser = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options) #, options=chrome_options
-    
-    
-    # Abrir la página inicial del DHIME
-    browser.get('http://dhime.ideam.gov.co/atencionciudadano/')
-    
-    #Aceptar los terminos y condiciones de la página
-    try:
-        button = WebDriverWait(browser, TimeWait*1.5).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".checkbox")))
-    except:
-        print("Tiempo de carga de la página superado, aumentar el valor de TimeWait")
-        return
-    button.click()
-    button = browser.find_element_by_css_selector(".enable-btn")
-    button.click()
-    
-    #Introducir las fechas de inicio y final de la descarga
-    Date_ini = WebDriverWait(browser, TimeWait*1.5).until(EC.presence_of_element_located((By.ID, "datepicker")))
-    Date_ini.click()
-    Date_ini.clear()
-    Date_ini.send_keys(DateIni)
-    
-    Date_fin = browser.find_element_by_id("datepicker1")
-    Date_fin.click()
-    Date_fin.clear()
-    Date_fin.send_keys(DateFin)
-    
-    #Seleccionar parametro a descargar
-    Par = browser.find_element_by_xpath("//div[@id='pnlEstandar']/table/tbody/tr/td[2]/span/span/span")
-    Par.click()
-    Par2 = browser.find_element_by_xpath("//li[contains(.,'"+Parameter+"')]")
-    Par2.click()
-    
-    #Seleccionar variable a descargar
-    Var = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//input[contains(@onclick,'"+Variable+"')]")))
-    Var.click()
-    
-    #Seleccionar departamento
-    Dep = browser.find_element_by_xpath("//div[@id='first']/table/tbody/tr/td[2]/span/span/span")
-    Dep.click()
-    time.sleep(TimeWait/4)
-    Dep_Index = int(WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//li[contains(.,'"+Department+"')]"))).get_attribute('outerHTML').split('"')[9]) + 1
-    Dep2 = browser.find_element_by_xpath("//ul[@id='deptos2_listbox']/li["+str(Dep_Index)+"]")
-    Dep2.click()
-    
-    #Seleccionar municipio
-    Mun = browser.find_element_by_xpath("//div[@id='first']/table/tbody/tr[2]/td[2]/span/span/span")
-    Mun.click()
-    Mun2 = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//ul[@id='municipio2_listbox']/li[2]")))
-    Mun2.click()
-    
-    #seleccionar estación
-    Est_cod = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//input[@value='"+Code+"']"))).get_attribute('outerHTML')
-    Est_cod_sep = Est_cod.split()[1].replace('"',"").replace("id=idEstacionmetaData","")
-    Est_cod_id = "//input[@id='checkMetaData"+Est_cod_sep+"']"
-    
-    Est = browser.find_element_by_xpath(Est_cod_id)
-    Est.click()
-    
-    #Agregar a la consulta
-    Search = browser.find_element_by_xpath("//div[@id='first']/div[5]/div")
-    Search.click()
-    
-    #Iniciar descarga
-    Download = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//div[@id='second']/div/div[3]/div")))
-    Download.click()
-    
-    #Aceptar terminos de uso
-    Accept = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.ID, "dijit_form_Button_2_label")))
-    Accept.click()
-    time.sleep(TimeWait*1.2)
-    
-    browser.close()
-    
-    # Extraer el archivo .csv del archivo comprimido descargado
-    zf = ZipFile(Path+'/datos.zip', 'r')
-    zf.extractall(Path)
-    zf.close()
-    
-    # Cambiar el nombre del archivo extraido
-    name=Code+'-'+Variable+'-'+DateIni.replace('/','')+'-'+DateFin.replace('/','')+'.csv'
-    os.rename(Path+'/excel.csv.csv', Path+'/'+name)
-    
-    # Eliminar el comprimido
-    os.remove(Path+"/datos.zip")
-    
-    print(name+' Descargado')
-    datos=pd.read_csv(Path+name)
+# def DHIME_Download(Path,DateIni,DateFin,Parameter,Variable,Department,Code,TimeWait=10):
 
-# Ejemplos
-DHIME_Download(Path="C:/Users/fdu001/Downloads/",DateIni="01/01/1970", DateFin="01/01/1980", Parameter="PRECIPITACION", Variable="PTPM_CON", Department="Tolima", Code="22050080")
+# Ejemplo
+Path="C:/Users/santi/Downloads/"
+DateIni="01/01/1970"
+DateFin="01/01/1980"
+Parameter="PRECIPITACION"
+Variable="PTPM_CON"
+Department="Tolima"
+Code="22050080"
+TimeWait=15
+
+# Abrir Google Chrome operado con Selenium cambiando la carpeta de descargas
+
+chrome_options = webdriver.ChromeOptions()
+#chrome_options.add_argument("headless")
+browser = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options) #, options=chrome_options
+
+
+# Abrir la página inicial del DHIME
+browser.get('http://dhime.ideam.gov.co/atencionciudadano/')
+
+#Aceptar los terminos y condiciones de la página
+try:
+    button = WebDriverWait(browser, TimeWait*1.5).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".checkbox")))
+except:
+    print("Tiempo de carga de la página superado, aumentar el valor de TimeWait")
+    # return
+button.click()
+button = browser.find_element_by_css_selector(".enable-btn")
+button.click()
+
+#Introducir las fechas de inicio y final de la descarga
+Date_ini = WebDriverWait(browser, TimeWait*1.5).until(EC.presence_of_element_located((By.ID, "datepicker")))
+Date_ini.click()
+Date_ini.clear()
+Date_ini.send_keys(DateIni)
+
+Date_fin = browser.find_element_by_id("datepicker1")
+Date_fin.click()
+Date_fin.clear()
+Date_fin.send_keys(DateFin)
+
+#Seleccionar parametro a descargar
+Par = browser.find_element_by_xpath("//div[@id='pnlEstandar']/table/tbody/tr/td[2]/span/span/span")
+Par.click()
+Par2 = browser.find_element_by_xpath("//li[contains(.,'"+Parameter+"')]")
+Par2.click()
+
+#Seleccionar variable a descargar
+Var = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//input[contains(@onclick,'"+Variable+"')]")))
+Var.click()
+
+#Seleccionar departamento
+Dep = browser.find_element_by_xpath("//div[@id='first']/table/tbody/tr/td[2]/span/span/span")
+Dep.click()
+time.sleep(TimeWait/4)
+Dep_Index = int(WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//li[contains(.,'"+Department+"')]"))).get_attribute('outerHTML').split('"')[9]) + 1
+Dep2 = browser.find_element_by_xpath("//ul[@id='deptos2_listbox']/li["+str(Dep_Index)+"]")
+Dep2.click()
+
+#Seleccionar municipio
+Mun = browser.find_element_by_xpath("//div[@id='first']/table/tbody/tr[2]/td[2]/span/span/span")
+Mun.click()
+Mun2 = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//ul[@id='municipio2_listbox']/li[2]")))
+Mun2.click()
+
+#seleccionar estación
+Est_cod = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//input[@value='"+Code+"']"))).get_attribute('outerHTML')
+Est_cod_sep = Est_cod.split()[1].replace('"',"").replace("id=idEstacionmetaData","")
+Est_cod_id = "//input[@id='checkMetaData"+Est_cod_sep+"']"
+
+Est = browser.find_element_by_xpath(Est_cod_id)
+Est.click()
+
+#Agregar a la consulta
+Search = browser.find_element_by_xpath("//div[@id='first']/div[5]/div")
+Search.click()
+
+#Iniciar descarga
+Download = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//div[@id='second']/div/div[3]/div")))
+Download.click()
+
+#Aceptar terminos de uso
+Accept = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.ID, "dijit_form_Button_2_label")))
+Accept.click()
+time.sleep(TimeWait*1.2)
+
+browser.close()
+
+# Extraer el archivo .csv del archivo comprimido descargado
+zf = ZipFile(Path+'/datos.zip', 'r')
+zf.extractall(Path)
+zf.close()
+
+# Cambiar el nombre del archivo extraido
+name=Code+'-'+Variable+'-'+DateIni.replace('/','')+'-'+DateFin.replace('/','')+'.csv'
+os.rename(Path+'/excel.csv.csv', Path+'/'+name)
+
+# Eliminar el comprimido
+os.remove(Path+"/datos.zip")
+
+print(name+' Descargado')
+datos=pd.read_csv(Path+name)
+
+
+
+# DHIME_Download(Path="C:/Users/fdu001/Downloads/",DateIni="01/01/1970", DateFin="01/01/1980", Parameter="PRECIPITACION", Variable="PTPM_CON", Department="Tolima", Code="22050080")
 
 
 
