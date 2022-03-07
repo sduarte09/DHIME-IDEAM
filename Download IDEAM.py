@@ -3,7 +3,6 @@ Created on Thu Apr 1 12:31:49 2021
 @author: John Alexander Sandoval Barrera - UNAL
 EDITED: Santiago Duarte - IHE Delft
 """
-
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -16,16 +15,20 @@ from zipfile import ZipFile
 import warnings
 warnings.filterwarnings("ignore")
 
+# General Parameters
 Path="C:/Users/santi/Downloads/"
 Parameter="PRECIPITACION"
 Variable="PTPM_CON"
 TimeWait=15
 
-stations=pd.read_csv("Datos_Tolima.csv")
+# Load Data
+stations=pd.read_csv("Datos_Tolima.csv",sep=';')
 dates=["01/01/1980","01/01/1990","01/01/2000","01/01/2010","31/12/2020"]
-all=pd.DataFrame(columns=stations["Codigo"],index=pd.date_range(start=dates[0], end=dates[-1]))
-
-for i in range(stations.shape[0]):
+if os.path.exists("Tolima.csv"):
+    all=pd.read_csv("Tolima.csv")
+else:
+    all=pd.DataFrame(columns=stations["Codigo"],index=pd.date_range(start=dates[0], end=dates[-1]))
+for i in range(5,stations.shape[0]): # 5,6, 7
     Department=stations["Dpto"][i]
     Code=stations["Codigo"][i]
     print("Station "+ str(i+1)+": "+str(Code))
@@ -40,7 +43,7 @@ for i in range(stations.shape[0]):
         browser.get('http://dhime.ideam.gov.co/atencionciudadano/')
         #Aceptar los terminos y condiciones de la página
         try:
-            button = WebDriverWait(browser, TimeWait*2).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".checkbox")))
+            button = WebDriverWait(browser, TimeWait*1.5).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".checkbox")))
         except:
             print("Tiempo de carga de la página superado, aumentar el valor de TimeWait")
             # return
@@ -107,3 +110,4 @@ for i in range(stations.shape[0]):
         # print(name+' Descargado')
         partial=pd.read_csv(Path+name)
         all[Code][pd.to_datetime(partial["Fecha"])]=partial["Valor"].values
+    all.to_csv("Tolima.csv", index=False)
