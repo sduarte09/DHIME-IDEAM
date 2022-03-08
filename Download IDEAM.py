@@ -28,7 +28,7 @@ if os.path.exists("Tolima.csv"):
     all=pd.read_csv("Tolima.csv")
 else:
     all=pd.DataFrame(columns=stations["Codigo"],index=pd.date_range(start=dates[0], end=dates[-1]))
-for i in range(5,stations.shape[0]): # 5,6, 7
+for i in range(0,stations.shape[0]): # 5,6, 7
     Department=stations["Dpto"][i]
     Code=stations["Codigo"][i]
     print("Station "+ str(i+1)+": "+str(Code))
@@ -82,32 +82,39 @@ for i in range(5,stations.shape[0]): # 5,6, 7
         Mun2 = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//ul[@id='municipio2_listbox']/li[2]")))
         Mun2.click()
         # Seleccionar estación
-        Est_cod = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//input[@value='"+str(Code)+"']"))).get_attribute('outerHTML')
-        Est_cod_sep = Est_cod.split()[1].replace('"',"").replace("id=idEstacionmetaData","")
-        Est_cod_id = "//input[@id='checkMetaData"+Est_cod_sep+"']"
-        Est = browser.find_element_by_xpath(Est_cod_id)
-        Est.click()
-        # Agregar a la consulta
-        Search = browser.find_element_by_xpath("//div[@id='first']/div[5]/div")
-        Search.click()
-        #Iniciar descarga
-        Download = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//div[@id='second']/div/div[3]/div")))
-        Download.click()
-        #Aceptar terminos de uso
-        Accept = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.ID, "dijit_form_Button_2_label")))
-        Accept.click()
-        time.sleep(TimeWait*1.2)
-        browser.close()
-        # Extraer el archivo .csv del archivo comprimido descargado
-        zf = ZipFile(Path+'/datos.zip', 'r')
-        zf.extractall(Path)
-        zf.close()
-        # Cambiar el nombre del archivo extraido
-        name=str(Code)+'-'+Variable+'-'+DateIni.replace('/','')+'-'+DateFin.replace('/','')+'.csv'
-        os.rename(Path+'/excel.csv.csv', Path+'/'+name)
-        # Eliminar el comprimido
-        os.remove(Path+"/datos.zip")
-        # print(name+' Descargado')
-        partial=pd.read_csv(Path+name)
-        all[Code][pd.to_datetime(partial["Fecha"])]=partial["Valor"].values
+        #Est_cod = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//input[@value='"+str(Code)+"']"))).get_attribute('outerHTML')
+        time.sleep(2)
+        try:
+            Est_cod =browser.find_element_by_xpath("//input[@value='"+str(Code[3:])+"']").get_attribute('outerHTML')
+            Est_cod_sep = Est_cod.split()[1].replace('"',"").replace("id=idEstacionmetaData","")
+            Est_cod_id = "//input[@id='checkMetaData"+Est_cod_sep+"']"
+            Est = browser.find_element_by_xpath(Est_cod_id)
+            Est.click()
+            # Agregar a la consulta
+            Search = browser.find_element_by_xpath("//div[@id='first']/div[5]/div")
+            Search.click()
+            #Iniciar descarga
+            Download = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//div[@id='second']/div/div[3]/div")))
+            Download.click()
+            #Aceptar terminos de uso
+            Accept = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.ID, "dijit_form_Button_2_label")))
+            Accept.click()
+            time.sleep(TimeWait*1.2)
+            browser.close()
+            # Extraer el archivo .csv del archivo comprimido descargado
+            zf = ZipFile(Path+'/datos.zip', 'r')
+            zf.extractall(Path)
+            zf.close()
+            # Cambiar el nombre del archivo extraido
+            name=str(Code)+'-'+Variable+'-'+DateIni.replace('/','')+'-'+DateFin.replace('/','')+'.csv'
+            os.rename(Path+'/excel.csv.csv', Path+'/'+name)
+            # Eliminar el comprimido
+            os.remove(Path+"/datos.zip")
+            # print(name+' Descargado')
+            partial=pd.read_csv(Path+name)
+            all[Code][pd.to_datetime(partial["Fecha"])]=partial["Valor"].values
+        except:
+            print("Station "+ str(i+1)+": "+str(Code)+" not found ")
+            browser.close()
+            break
     all.to_csv("Tolima.csv", index=False)
