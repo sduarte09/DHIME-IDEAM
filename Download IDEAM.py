@@ -25,12 +25,12 @@ TimeWait=15
 stations=pd.read_csv("Datos_Tolima.csv",sep=';')
 dates=["01/01/1980","01/01/1990","01/01/2000","01/01/2010","31/12/2020"]
 if os.path.exists("Tolima.csv"):
-    all=pd.read_csv("Tolima.csv")
+    all=pd.read_csv("Tolima.csv",index_col="Fecha",parse_dates=True)
 else:
     all=pd.DataFrame(columns=stations["Codigo"],index=pd.date_range(start=dates[0], end=dates[-1]))
-for i in range(0,stations.shape[0]): # 5,6, 7
+for i in range(18,stations.shape[0]): #5,
     Department=stations["Dpto"][i]
-    Code=stations["Codigo"][i]
+    Code=stations["Codigo"][i][3:]
     print("Station "+ str(i+1)+": "+str(Code))
     for j in range(0,4):
         DateIni=dates[j]
@@ -38,7 +38,7 @@ for i in range(0,stations.shape[0]): # 5,6, 7
         # Abrir Google Chrome operado con Selenium cambiando la carpeta de descargas
         chrome_options = webdriver.ChromeOptions()
         #chrome_options.add_argument("headless")
-        browser = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options) #, options=chrome_options
+        browser = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options) #, options=chrome_options ChromeDriverManager().install()
         # Abrir la página inicial del DHIME
         browser.get('http://dhime.ideam.gov.co/atencionciudadano/')
         #Aceptar los terminos y condiciones de la página
@@ -85,36 +85,37 @@ for i in range(0,stations.shape[0]): # 5,6, 7
         #Est_cod = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//input[@value='"+str(Code)+"']"))).get_attribute('outerHTML')
         time.sleep(2)
         try:
-            Est_cod =browser.find_element_by_xpath("//input[@value='"+str(Code[3:])+"']").get_attribute('outerHTML')
+            Est_cod =browser.find_element_by_xpath("//input[@value='"+str(Code)+"']").get_attribute('outerHTML')
             Est_cod_sep = Est_cod.split()[1].replace('"',"").replace("id=idEstacionmetaData","")
             Est_cod_id = "//input[@id='checkMetaData"+Est_cod_sep+"']"
             Est = browser.find_element_by_xpath(Est_cod_id)
             Est.click()
-            # Agregar a la consulta
-            Search = browser.find_element_by_xpath("//div[@id='first']/div[5]/div")
-            Search.click()
-            #Iniciar descarga
-            Download = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//div[@id='second']/div/div[3]/div")))
-            Download.click()
-            #Aceptar terminos de uso
-            Accept = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.ID, "dijit_form_Button_2_label")))
-            Accept.click()
-            time.sleep(TimeWait*1.2)
-            browser.close()
-            # Extraer el archivo .csv del archivo comprimido descargado
-            zf = ZipFile(Path+'/datos.zip', 'r')
-            zf.extractall(Path)
-            zf.close()
-            # Cambiar el nombre del archivo extraido
-            name=str(Code)+'-'+Variable+'-'+DateIni.replace('/','')+'-'+DateFin.replace('/','')+'.csv'
-            os.rename(Path+'/excel.csv.csv', Path+'/'+name)
-            # Eliminar el comprimido
-            os.remove(Path+"/datos.zip")
-            # print(name+' Descargado')
-            partial=pd.read_csv(Path+name)
-            all[Code][pd.to_datetime(partial["Fecha"])]=partial["Valor"].values
         except:
             print("Station "+ str(i+1)+": "+str(Code)+" not found ")
             browser.close()
             break
-    all.to_csv("Tolima.csv", index=False)
+        # Agregar a la consulta
+        Search = browser.find_element_by_xpath("//div[@id='first']/div[5]/div")
+        Search.click()
+        #Iniciar descarga
+        Download = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//div[@id='second']/div/div[3]/div")))
+        Download.click()
+        #Aceptar terminos de uso
+        Accept = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.ID, "dijit_form_Button_2_label")))
+        Accept.click()
+        time.sleep(TimeWait*1.2)
+        time.sleep(5)
+        browser.close()
+        # Extraer el archivo .csv del archivo comprimido descargado
+        zf = ZipFile(Path+'/datos.zip', 'r')
+        zf.extractall(Path)
+        zf.close()
+        # Cambiar el nombre del archivo extraido
+        name=str(Code)+'-'+Variable+'-'+DateIni.replace('/','')+'-'+DateFin.replace('/','')+'.csv'
+        os.rename(Path+'/excel.csv.csv', Path+'/'+name)
+        # Eliminar el comprimido
+        os.remove(Path+"/datos.zip")
+        # print(name+' Descargado')
+        partial=pd.read_csv(Path+name)
+        all[Code][pd.to_datetime(partial["Fecha"])]=partial["Valor"].values
+    all.to_csv("Tolima.csv", index=True, index_label="Fecha")
