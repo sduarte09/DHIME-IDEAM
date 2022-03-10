@@ -43,11 +43,11 @@ button.click()
 #Aceptar los terminos y condiciones de la página
 button = browser.find_element_by_css_selector(".enable-btn")
 button.click()
-
-for i in range(20,stations.shape[0]): #5,
+prev=0
+for i in range(0,stations.shape[0]): #0,stations.shape[0]
     Department=stations["Dpto"][i]
     Code=stations["Codigo"][i][3:]
-    print("Station "+ str(i+1)+": "+str(Code))
+    print("Station "+ str(i)+": "+str(Code))
     for j in range(0,4):
         DateIni=dates[j]
         DateFin=dates[j+1]
@@ -69,11 +69,12 @@ for i in range(20,stations.shape[0]): #5,
         Var = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//input[contains(@onclick,'"+Variable+"')]")))
         Var.click()
         # Seleccionar departamento
+        time.sleep(2)
         Dep = browser.find_element_by_xpath("//div[@id='first']/table/tbody/tr/td[2]/span/span/span")
         Dep.click()
-        time.sleep(TimeWait/4)
+        time.sleep(TimeWait/2)
         Dep_Index = int(WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//li[contains(.,'"+Department+"')]"))).get_attribute('outerHTML').split('"')[9]) + 1
-        Dep2 = browser.find_element_by_xpath("//ul[@id='deptos2_listbox']/li["+str(Dep_Index)+"]")
+        Dep2 = browser.find_element_by_xpath("//*[@id='deptos2_listbox']/li["+str(Dep_Index)+"]")
         Dep2.click()
         # Seleccionar municipio (Todos)
         time.sleep(TimeWait/4)
@@ -91,7 +92,7 @@ for i in range(20,stations.shape[0]): #5,
             Est = browser.find_element_by_xpath(Est_cod_id)
             Est.click()
         except:
-            print("Station "+ str(i+1)+": "+str(Code)+" not found ")
+            print("    Station "+ str(i)+" not found ")
             break
         # Agregar a la consulta
         Search = browser.find_element_by_xpath("//div[@id='first']/div[5]/div")
@@ -102,9 +103,7 @@ for i in range(20,stations.shape[0]): #5,
         #Aceptar terminos de uso
         Accept = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.ID, "dijit_form_Button_2_label")))
         Accept.click()
-        time.sleep(TimeWait*1.2)
-        # time.sleep(5)
-        # browser.close()
+        time.sleep(TimeWait*2)
         # Extraer el archivo .csv del archivo comprimido descargado
         zf = ZipFile(Path+'/datos.zip', 'r')
         zf.extractall(Path)
@@ -120,8 +119,10 @@ for i in range(20,stations.shape[0]): #5,
         # Restart Search
         clean = browser.find_element_by_xpath("//*[@id='second']/div/div[3]/div[3]")
         clean.click()
-        clean_check = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//*[@id='dijit_form_Button_4_label']")))
+        clean_check = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//*[@id='dijit_form_Button_"+str(4+prev)+"_label']")))
         clean_check.click()
+        prev=prev+2
         consulta = WebDriverWait(browser, TimeWait).until(EC.presence_of_element_located((By.XPATH, "//*[@id='ContenedorCiudadano_tablist_first']")))
         consulta.click()
+    print("Station "+ str(i)+" downloaded")
     all.to_csv("Tolima.csv", index=True, index_label="Fecha")
